@@ -58,7 +58,7 @@ function updateCustomShortcutInputText(inputItem, keyCode) {
 }
 
 // List of custom actions for which customValue should be disabled
-var customActionsNoValues = ["pause", "muted", "mark", "jump", "display"];
+var customActionsNoValues = ["pause", "muted", "mark", "jump", "display", "fullscreen"];
 
 function add_shortcut() {
   var html = `<select class="customDo">
@@ -73,6 +73,7 @@ function add_shortcut() {
     <option value="mark">Set marker</option>
     <option value="jump">Jump to marker</option>
     <option value="display">Show/hide controller</option>
+    <option value="fullscreen">Switch full screen</option>
     </select>
     <input class="customKey" type="text" placeholder="press a key"/>
     <input class="customValue" type="text" placeholder="value (0.10)"/>
@@ -183,6 +184,7 @@ function save_options() {
     "rewindKeyCode",
     "advanceKeyCode",
     "fastKeyCode",
+    "fullscreenKeyCode",
   ]);
   chrome.storage.sync.set(
     {

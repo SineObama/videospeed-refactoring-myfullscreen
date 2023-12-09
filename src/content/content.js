@@ -84,6 +84,13 @@ chrome.storage.sync.get(tc.settings, function (storage) {
       force: false,
       predefined: true,
     }); // default: G
+    tc.settings.keyBindings.push({
+      action: "fullscreen",
+      key: Number(storage.fullscreenKeyCode) || 70,
+      value: 0,
+      force: false,
+      predefined: true,
+    }); // default: F
     tc.settings.version = "0.5.3";
 
     chrome.storage.sync.set({
@@ -490,28 +497,6 @@ function setupListener() {
 }
 
 function initializeWhenReady(document) {
-  // TEST CODE! TODO: Figure out how to actually make this if statement
-  // meaningfully check if in "test mode". Chrome offers very little tooling
-  // for environments I've noticed... may need to do at build stage :S
-  if (true) {
-    if (location.href.startsWith("file:")) {
-      let video = document.getElementsByTagName("video")[0];
-      video.muted = true;
-      video.loop = true;
-      window.addEventListener("keypress", (event) => {
-        if (event.key == "f") {
-          if (!document.fullscreenElement) {
-            video.requestFullscreen();
-          } else {
-            document.exitFullscreen();
-          }
-        }
-      });
-    }
-  }
-
-  // END TEST CODE
-
   logger.log("Begin initializeWhenReady", 5);
   if (isBlacklisted()) {
     logger.log("Site is blacklisted, ending initializeWhenReady", 5);
@@ -842,6 +827,8 @@ function runAction(action, value, e) {
         setMark(v);
       } else if (action === "jump") {
         jumpToMark(v);
+      } else if (action === "fullscreen") {
+        switchFullscreen(v);
       }
     }
   });
@@ -892,6 +879,15 @@ function jumpToMark(v) {
   logger.log("Recalling marker", 5);
   if (v.vsc.mark && typeof v.vsc.mark === "number") {
     v.currentTime = v.vsc.mark;
+  }
+}
+
+function switchFullscreen(v) {
+  // logger.log("switchFullscreen", 5);
+  if (!document.fullscreenElement) {
+    v.requestFullscreen();
+  } else {
+    document.exitFullscreen();
   }
 }
 
