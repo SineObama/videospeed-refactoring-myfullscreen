@@ -884,18 +884,31 @@ function jumpToMark(v) {
 
 function waitEnough(waitObj, timeout) {
   var curId;
-  var startTime = new Date().getTime();
   return new Promise((resolve, reject) => {
 
-    clearTimeout(waitObj.timeout);
-    curId = waitObj.timeout = setTimeout(() => {
-      resolve();
+    var startTime = new Date().getTime();
+    clearTimeout(waitObj.timeoutId);
+    curId = waitObj.timeoutId = setTimeout(() => {
+      var endTime = new Date().getTime();
+      let gap = endTime - startTime;
+      console.log("zxzx", startTime, endTime, gap);
+      if (gap > 70) {
+        setTimeout(() => {
+          resolve();
+        }, gap)
+      }
     }, timeout);
+    while (startTime + timeout < new Date().getTime()) {
+    }
 
+  }).then(value => {
+    if (curId !== waitObj.timeoutId) {
+      return Promise.reject();
+    }
   });
 }
 
-var waitObj = {timeout:undefined};
+var waitObj = {timeoutId: undefined};
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
