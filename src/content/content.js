@@ -887,13 +887,16 @@ function waitEnough(waitObj, timeout) {
   var count = 0, total = 20;
   var firstId;
   var startTime = new Date().getTime();
+  debugger;
   return new Promise((resolve, reject) => {
 
     clearTimeout(waitObj.timeoutId);
+    debugger;
 
     function nextTime() {
       var id = setTimeout(() => {
         count++;
+        console.log('count', count);
         if (count >= total) {
           var endTime = new Date().getTime();
           var gap = endTime - startTime;
@@ -923,17 +926,19 @@ var waitObj = {timeoutId: undefined};
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
-  console.log('item', item.force, item);
-  if (item && !item.force) {
+  console.log('item', item.force);
+  console.log('item cc', item && !item.force);
+  if (item && item.force === 'false') {
+    console.log('item if', !item.force);
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
-      waitEnough(waitObj, 200).then(() => {
+      waitEnough(waitObj, 300).then(() => {
         if (!document.fullscreenElement) {
           v.requestFullscreen();
         }
       }, () => {})
     } else {
-      waitEnough(waitObj, 200).then(() => {
+      waitEnough(waitObj, 300).then(() => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
@@ -941,11 +946,11 @@ function switchFullscreen(v) {
     }
     return;
   }
-  // if (!document.fullscreenElement) {
-  //   v.requestFullscreen();
-  // } else {
-  //   document.exitFullscreen();
-  // }
+  if (!document.fullscreenElement) {
+    v.requestFullscreen();
+  } else {
+    document.exitFullscreen();
+  }
 }
 
 function handleDrag(video, e) {
