@@ -882,8 +882,30 @@ function jumpToMark(v) {
   }
 }
 
+var switchFullscreenTimeout;
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
+  var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
+  if (item && !item.force) {
+    // use a delay way to avoid affecting website's fullscreen method
+    if (!document.fullscreenElement) {
+      // todo try to wait more when other javascript running
+      clearTimeout(switchFullscreenTimeout);
+      switchFullscreenTimeout = setTimeout(() => {
+        if (!document.fullscreenElement) {
+          v.requestFullscreen();
+        }
+      }, 300);
+    } else {
+      clearTimeout(switchFullscreenTimeout);
+      switchFullscreenTimeout = setTimeout(()=>{
+        if (document.fullscreenElement) {
+          document.exitFullscreen();
+        }
+      }, 300);
+    }
+    return;
+  }
   if (!document.fullscreenElement) {
     v.requestFullscreen();
   } else {
