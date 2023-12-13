@@ -884,7 +884,7 @@ function jumpToMark(v) {
 
 function waitEnough(waitObj, timeout) {
   // 通过多次异步，尽量等待其他js执行完毕，避免可能页面刚打开时原本的js还没执行完，比如可能变成先执行我们的全屏操作
-  var count = 0, total = 30;
+  var count = 0, total = 20;
   var firstId;
   var startTime = new Date().getTime();
   return new Promise((resolve, reject) => {
@@ -926,13 +926,13 @@ function switchFullscreen(v) {
   if (item && item.force === 'false') {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
-      waitEnough(waitObj, 300).then(() => {
+      waitEnough(waitObj, 500).then(() => {
         if (!document.fullscreenElement) {
           v.requestFullscreen();
         }
       }, () => {})
     } else {
-      waitEnough(waitObj, 300).then(() => {
+      waitEnough(waitObj, 500).then(() => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
