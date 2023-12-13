@@ -883,26 +883,36 @@ function jumpToMark(v) {
 }
 
 function waitEnough(waitObj, timeout) {
-  var curId;
+  // 通过多次异步，尽量等待其他js执行完毕，避免可能页面刚打开时原本的js还没执行完，比如可能变成先执行我们的全屏操作
+  let count = 0, total = 20;
+  let firstId;
+  let startTime = new Date().getTime();
   return new Promise((resolve, reject) => {
 
-    var startTime = new Date().getTime();
     clearTimeout(waitObj.timeoutId);
-    curId = waitObj.timeoutId = setTimeout(() => {
-      var endTime = new Date().getTime();
-      let gap = endTime - startTime;
-      console.log("zxzx", startTime, endTime, gap);
-      if (gap > 70) {
-        setTimeout(() => {
+
+    function nextTime() {
+      let id = setTimeout(() => {
+        count++;
+        if (count >= total) {
+          let endTime = new Date().getTime();
+          let gap = endTime - startTime;
+          console.debug("waitEnough", startTime, endTime, gap);
           resolve();
-        }, gap)
+        } else {
+          nextTime();
+        }
+      }, timeout / total);
+
+      if (!firstId) {
+        firstId = waitObj.timeoutId = id;
       }
-    }, timeout);
-    while (startTime + timeout < new Date().getTime()) {
     }
 
+    nextTime();
+
   }).then(value => {
-    if (curId !== waitObj.timeoutId) {
+    if (firstId !== waitObj.timeoutId) {
       return Promise.reject();
     }
   });
@@ -915,13 +925,13 @@ function switchFullscreen(v) {
   if (item && !item.force) {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
-      waitEnough(waitObj, 300).then(() => {
+      waitEnough(waitObj, 200).then(() => {
         if (!document.fullscreenElement) {
           v.requestFullscreen();
         }
       }, () => {})
     } else {
-      waitEnough(waitObj, 300).then(() => {
+      waitEnough(waitObj, 200).then(() => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
