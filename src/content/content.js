@@ -884,19 +884,16 @@ function jumpToMark(v) {
 
 function waitEnough(waitObj, timeout) {
   // 通过多次异步，尽量等待其他js执行完毕，避免可能页面刚打开时原本的js还没执行完，比如可能变成先执行我们的全屏操作
-  var count = 0, total = 20;
+  var count = 0, total = 30;
   var firstId;
   var startTime = new Date().getTime();
-  debugger;
   return new Promise((resolve, reject) => {
 
     clearTimeout(waitObj.timeoutId);
-    debugger;
 
     function nextTime() {
       var id = setTimeout(() => {
         count++;
-        console.log('count', count);
         if (count >= total) {
           var endTime = new Date().getTime();
           var gap = endTime - startTime;
@@ -926,10 +923,7 @@ var waitObj = {timeoutId: undefined};
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
-  console.log('item', item.force);
-  console.log('item cc', item && !item.force);
   if (item && item.force === 'false') {
-    console.log('item if', !item.force);
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
       waitEnough(waitObj, 300).then(() => {
