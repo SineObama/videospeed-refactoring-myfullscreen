@@ -882,27 +882,37 @@ function jumpToMark(v) {
   }
 }
 
-var switchFullscreenTimeout;
+function waitEnough(waitObj, timeout) {
+  var curId;
+  var startTime = new Date().getTime();
+  return new Promise((resolve, reject) => {
+
+    clearTimeout(waitObj.timeout);
+    curId = waitObj.timeout = setTimeout(() => {
+      resolve();
+    }, timeout);
+
+  });
+}
+
+var waitObj = {timeout:undefined};
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
   if (item && !item.force) {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
-      // todo try to wait more when other javascript running
-      clearTimeout(switchFullscreenTimeout);
-      switchFullscreenTimeout = setTimeout(() => {
+      waitEnough(waitObj, 300).then(() => {
         if (!document.fullscreenElement) {
           v.requestFullscreen();
         }
-      }, 300);
+      }, () => {})
     } else {
-      clearTimeout(switchFullscreenTimeout);
-      switchFullscreenTimeout = setTimeout(()=>{
+      waitEnough(waitObj, 300).then(() => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
-      }, 300);
+      }, () => {})
     }
     return;
   }
