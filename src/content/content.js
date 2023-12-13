@@ -884,20 +884,20 @@ function jumpToMark(v) {
 
 function waitEnough(waitObj, timeout) {
   // 通过多次异步，尽量等待其他js执行完毕，避免可能页面刚打开时原本的js还没执行完，比如可能变成先执行我们的全屏操作
-  let count = 0, total = 20;
-  let firstId;
-  let startTime = new Date().getTime();
+  var count = 0, total = 20;
+  var firstId;
+  var startTime = new Date().getTime();
   return new Promise((resolve, reject) => {
 
     clearTimeout(waitObj.timeoutId);
 
     function nextTime() {
-      let id = setTimeout(() => {
+      var id = setTimeout(() => {
         count++;
         if (count >= total) {
-          let endTime = new Date().getTime();
-          let gap = endTime - startTime;
-          console.debug("waitEnough", startTime, endTime, gap);
+          var endTime = new Date().getTime();
+          var gap = endTime - startTime;
+          console.log("waitEnough", startTime, endTime, gap);
           resolve();
         } else {
           nextTime();
@@ -906,6 +906,7 @@ function waitEnough(waitObj, timeout) {
 
       if (!firstId) {
         firstId = waitObj.timeoutId = id;
+        console.log('firstId', firstId);
       }
     }
 
@@ -922,6 +923,7 @@ var waitObj = {timeoutId: undefined};
 function switchFullscreen(v) {
   // logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
+  console.log('item', item.force, item);
   if (item && !item.force) {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
@@ -939,11 +941,11 @@ function switchFullscreen(v) {
     }
     return;
   }
-  if (!document.fullscreenElement) {
-    v.requestFullscreen();
-  } else {
-    document.exitFullscreen();
-  }
+  // if (!document.fullscreenElement) {
+  //   v.requestFullscreen();
+  // } else {
+  //   document.exitFullscreen();
+  // }
 }
 
 function handleDrag(video, e) {
