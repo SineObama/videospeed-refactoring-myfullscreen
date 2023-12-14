@@ -761,6 +761,15 @@ function setSpeed(video, speed) {
   logger.log("setSpeed finished: " + speed, 5);
 }
 
+/**
+ * 为避免本插件功能与网页原功能在同一个功能上重复生效，进行短暂的延迟。目前适用于几个常用操作：暂停、前进、后退、全屏。
+ * @param rewindAdvanceWaitObj 等待对象，存有一个id
+ * @param timeout 超时时间毫秒
+ * @param action 当前动作
+ * @param checkF 检查状态方法，延迟后根据检查结果决定是否继续执行修改
+ * @param doF 执行修改方法
+ * @param elseF 不执行修改时的方法，用于日志
+ */
 function doOrwait(rewindAdvanceWaitObj, timeout, action, checkF, doF, elseF) {
   var item = tc.settings.keyBindings.find((item) => item.action === action);
   if (item && item.force === 'false') {
@@ -930,7 +939,10 @@ function jumpToMark(v) {
   }
 }
 
-// 暂时还是无法解决刚打开B站视频页面时，点击全屏键可以被立即响应，从而丢失了B站的播放器功能的问题
+/**
+ * 一开始写这个是异想天开想要解决B站视频页面刚打开时，点击全屏键可以被立即响应，从而丢失了B站的播放器功能的问题
+ * 其实根本没什么必要搞这个，一开始的短暂延迟就可以正常避免冲突。
+ */
 function waitForIdle(waitObj, timeout) {
   let count = 0, total = 20;
   let timeoutOnce = timeout / total;
