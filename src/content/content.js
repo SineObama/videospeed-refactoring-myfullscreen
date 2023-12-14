@@ -84,13 +84,6 @@ chrome.storage.sync.get(tc.settings, function (storage) {
       force: false,
       predefined: true,
     }); // default: G
-    tc.settings.keyBindings.push({
-      action: "fullscreen",
-      key: Number(storage.fullscreenKeyCode) || 70,
-      value: 0,
-      force: false,
-      predefined: true,
-    }); // default: F
     tc.settings.version = "0.5.3";
 
     chrome.storage.sync.set({
