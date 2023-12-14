@@ -545,6 +545,25 @@ function getShadow(parent) {
   return result.flat(Infinity);
 }
 
+/**
+ * 个人自定义排除项。
+ * @returns {boolean}
+ */
+function myExclude(item) {
+  // B站可能需要排除重复快捷键
+  if (/bilibili\.com$/i.test(location.hostname)) {
+    // 长按右键加速功能，直接排除
+    if (item.key === 39) {
+      return true;
+    }
+    if (localStorage.myvsc_excludeNormal) {
+      // Spacebar, Left Arrow, F
+      return [32, 37, 70].indexOf(item.key) > -1;
+    }
+  }
+  return false;
+}
+
 function initializeNow(document) {
   logger.log("Begin initializeNow", 5);
   if (!tc.settings.enabled) return;
@@ -613,7 +632,7 @@ function initializeNow(document) {
         }
 
         var item = tc.settings.keyBindings.find((item) => item.key === keyCode);
-        if (item && !(localStorage.myvsc_excludeNormal && ['pause', 'fullscreen', 'rewind', 'advance'].indexOf(item.action) > -1 && /bilibili\.com$/i.test(location.hostname))) {
+        if (item && !myExclude(item)) {
           runAction(item.action, item.value);
           if (item.force === "true") {
             // disable websites key bindings
