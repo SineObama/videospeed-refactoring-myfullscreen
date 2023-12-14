@@ -882,26 +882,31 @@ function jumpToMark(v) {
   }
 }
 
-function waitEnough(waitObj, timeout) {
-  let count = 0, total = window.waitEnoughTotal || 20;
+// 暂时还是无法解决刚打开B站视频页面时，点击全屏键可以被立即响应，从而丢失了B站的播放器功能的问题
+function waitForIdle(waitObj, timeout) {
+  let count = 0, total = 20;
   let timeoutOnce = timeout / total;
   let serialId = ++waitObj.serialId;
   const beginTime = new Date().getTime();
-  return new Promise((resolve) => {
+  return new Promise((resolve, reject) => {
 
     // 每次等一小段时间
     function nextTime() {
       let startTime = new Date().getTime();
       let id = setTimeout(() => {
-        if (serialId !== waitObj.serialId) {
+        let endTime = new Date().getTime();
+        if (serialId !== waitObj.serialId || endTime - beginTime > timeout) {
+          reject();
           return;
         }
-        let endTime = new Date().getTime();
         let gap = endTime - startTime - timeoutOnce;
-        logger.log("waitEnough gap: " + gap, 5);
-        // 核心：如果实际执行时间比设定的时间延迟得比较多，我觉得代表着可能有其他js还在执行，此时继续进行下一次等待，要等系统空闲再执行我们的功能
+        logger.log("waitForIdle gap: " + gap, 5);
+        // 核心：如果实际执行时间比设定的时间延迟得比较多，我觉得代表着可能有其他js还在执行，此时继续进行下一次等待，要等浏览器空闲再执行我们的功能
         if (gap > 10) {
-          nextTime();
+          // 发现浏览器忙时，多等一些时间再进行下一次判断
+          setTimeout(() => {
+            nextTime();
+          }, (gap + timeoutOnce) * 3);
         } else {
           resolve();
         }
@@ -925,13 +930,13 @@ function switchFullscreen(v) {
   if (item && item.force === 'false') {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
-      waitEnough(waitObj, 500).then(() => {
+      waitForIdle(waitObj, 500).then(() => {
         if (!document.fullscreenElement) {
           v.requestFullscreen();
         }
       }, () => {})
     } else {
-      waitEnough(waitObj, 500).then(() => {
+      waitForIdle(waitObj, 500).then(() => {
         if (document.fullscreenElement) {
           document.exitFullscreen();
         }
