@@ -742,6 +742,21 @@ function setSpeed(video, speed) {
   logger.log("setSpeed finished: " + speed, 5);
 }
 
+function doOrwait(rewindAdvanceWaitObj, timeout, action, checkF, doF, elseF) {
+  var item = tc.settings.keyBindings.find((item) => item.action === action);
+  if (item && item.force === 'false') {
+    waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
+      if (checkF()) {
+        doF();
+      } else {
+        elseF();
+      }
+    }, elseF)
+  } else {
+    doF();
+  }
+}
+
 function runAction(action, value, e) {
   logger.log("runAction Begin", 5);
 
@@ -765,35 +780,17 @@ function runAction(action, value, e) {
     if (!v.classList.contains("vsc-cancelled")) {
       var item = tc.settings.keyBindings.find((item) => item.action === action);
       if (action === "rewind") {
-        if (item && item.force === 'false') {
-          let beginTime = v.currentTime;
-          waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
-            if (Math.abs(v.currentTime - beginTime) < 3) {
-              logger.log("Rewind", 5);
-              v.currentTime -= value;
-            }
-          }, () => {
-            logger.log("Rewind abandon", 5);
-          })
-        } else {
+        let beginTime = v.currentTime;
+        doOrwait(rewindAdvanceWaitObj, 500, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
           logger.log("Rewind", 5);
           v.currentTime -= value;
-        }
+        }, () => logger.log("Rewind abandon", 5));
       } else if (action === "advance") {
-        if (item && item.force === 'false') {
-          let beginTime = v.currentTime;
-          waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
-            if (Math.abs(v.currentTime - beginTime) < 3) {
-              logger.log("Fast forward", 5);
-              v.currentTime += value;
-            }
-          }, () => {
-            logger.log("Fast forward abandon", 5);
-          })
-        } else {
+        let beginTime = v.currentTime;
+        doOrwait(rewindAdvanceWaitObj, 500, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
           logger.log("Fast forward", 5);
           v.currentTime += value;
-        }
+        }, () => logger.log("Fast forward abandon", 5));
       } else if (action === "faster") {
         logger.log("Increase speed", 5);
         // Maximum playback speed in Chrome is set to 16:
@@ -958,10 +955,10 @@ function waitForIdle(waitObj, timeout) {
       }, timeoutOnce);
     }
 
-    // 初次执行也延迟一
-    setTimeout(() => {
+    // 初次执行不延迟，不然好像会影响长按
+    // setTimeout(() => {
       nextTime();
-    }, sessionStorage.myvsc_firtdelay || 150);
+    // }, sessionStorage.myvsc_firtdelay || 150);
 
   }).then(() => {
     // 检查这个对象上是否有重复操作，没有时本次操作才正式生效
