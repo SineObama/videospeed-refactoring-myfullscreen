@@ -745,14 +745,20 @@ function setSpeed(video, speed) {
 function doOrwait(rewindAdvanceWaitObj, timeout, action, checkF, doF, elseF) {
   var item = tc.settings.keyBindings.find((item) => item.action === action);
   if (item && item.force === 'false') {
+    timeout = sessionStorage.myvsc_timeout || timeout;
     // use a delay way to avoid affecting website's fullscreen method
-    waitForIdle(rewindAdvanceWaitObj, timeout).then(() => {
+    let doNow = () => {
       if (checkF()) {
         doF();
       } else {
         elseF();
       }
-    }, elseF)
+    };
+    if (sessionStorage.myvsc_wait) {
+      waitForIdle(rewindAdvanceWaitObj, timeout).then(doNow, elseF);
+    } else {
+      setTimeout(doNow, timeout)
+    }
   } else {
     doF();
   }
@@ -782,13 +788,13 @@ function runAction(action, value, e) {
       var item = tc.settings.keyBindings.find((item) => item.action === action);
       if (action === "rewind") {
         let beginTime = v.currentTime;
-        doOrwait(rewindAdvanceWaitObj, 500, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
+        doOrwait(rewindAdvanceWaitObj, 100, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
           logger.log("Rewind", 5);
           v.currentTime -= value;
         }, () => logger.log("Rewind abandon", 5));
       } else if (action === "advance") {
         let beginTime = v.currentTime;
-        doOrwait(rewindAdvanceWaitObj, 500, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
+        doOrwait(rewindAdvanceWaitObj, 100, action, () => Math.abs(v.currentTime - beginTime) < 3, () => {
           logger.log("Fast forward", 5);
           v.currentTime += value;
         }, () => logger.log("Fast forward abandon", 5));
