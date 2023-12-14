@@ -883,43 +883,41 @@ function jumpToMark(v) {
 }
 
 function waitEnough(waitObj, timeout) {
-  var count = 0, total = 20;
-  var firstId;
-  return new Promise((resolve, reject) => {
+  let count = 0, total = 10;
+  let timeoutOnce = timeout / total;
+  let serialId = ++waitObj.serialId;
+  const beginTime = new Date().getTime();
+  return new Promise((resolve) => {
 
-    clearTimeout(waitObj.timeoutId);
+    // 每次等一小段时间
     function nextTime() {
-      var startTime = new Date().getTime();
-      var id = setTimeout(() => {
-        var endTime = new Date().getTime();
-        let gap = endTime - startTime;
-        console.log("zxzx", startTime, endTime, gap);
-        // 如果时间延迟相对比较多，代表可能有其他js还在执行，先不打扰，等系统空闲再执行我们的流程
-        if (gap > 40) {
+      let startTime = new Date().getTime();
+      let id = setTimeout(() => {
+        let endTime = new Date().getTime();
+        let gap = endTime - startTime - timeoutOnce;
+        logger.log("waitEnough gap: " + gap, 5);
+        // 核心：如果实际执行时间比设定的时间延迟得比较多，我觉得代表着可能有其他js还在执行，此时继续进行下一次等待，要等系统空闲再执行我们的功能
+        if (gap > 30) {
           nextTime();
         } else {
           resolve();
         }
-      }, timeout / 20);
-
-      if (!firstId) {
-        firstId = waitObj.timeoutId = id;
-        console.log('firstId', firstId);
-      }
+      }, timeoutOnce);
     }
 
     nextTime();
 
-  }).then(value => {
-    if (firstId !== waitObj.timeoutId) {
+  }).then(() => {
+    // 检查这个对象上是否有重复操作，没有时本次操作才正式生效
+    if (serialId !== waitObj.serialId) {
       return Promise.reject();
     }
   });
 }
 
-var waitObj = {timeoutId: undefined};
+var waitObj = {serialId: 0};
 function switchFullscreen(v) {
-  // logger.log("switchFullscreen", 5);
+  logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
   if (item && item.force === 'false') {
     // use a delay way to avoid affecting website's fullscreen method
