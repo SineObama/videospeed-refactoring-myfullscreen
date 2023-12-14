@@ -613,7 +613,7 @@ function initializeNow(document) {
         }
 
         var item = tc.settings.keyBindings.find((item) => item.key === keyCode);
-        if (item && !(['pause', 'fullscreen', 'rewind', 'advance'].indexOf(item.action) > -1 && /bilibili\.com$/i.test(location.hostname))) {
+        if (item && !(localStorage.myvsc_excludeNormal && ['pause', 'fullscreen', 'rewind', 'advance'].indexOf(item.action) > -1 && /bilibili\.com$/i.test(location.hostname))) {
           runAction(item.action, item.value);
           if (item.force === "true") {
             // disable websites key bindings
@@ -745,7 +745,8 @@ function setSpeed(video, speed) {
 function doOrwait(rewindAdvanceWaitObj, timeout, action, checkF, doF, elseF) {
   var item = tc.settings.keyBindings.find((item) => item.action === action);
   if (item && item.force === 'false') {
-    waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
+    // use a delay way to avoid affecting website's fullscreen method
+    waitForIdle(rewindAdvanceWaitObj, timeout).then(() => {
       if (checkF()) {
         doF();
       } else {
@@ -854,35 +855,16 @@ var rewindAdvanceWaitObj = {serialId: 0};
 var pauseWaitObj = {serialId: 0};
 
 function pause(v) {
-  var item = tc.settings.keyBindings.find((item) => item.action === 'pause');
-  if (item && item.force === 'false') {
-    if (v.paused) {
-      waitForIdle(pauseWaitObj, 500).then(() => {
-        if (v.paused) {
-          logger.log("Resuming video", 5);
-          v.play();
-        }
-      }, () => {
-        logger.log("Resuming video abandon", 5);
-      })
-    } else {
-      waitForIdle(pauseWaitObj, 500).then(() => {
-        if (!v.paused) {
-          logger.log("Pausing video", 5);
-          v.pause();
-        }
-      }, () => {
-        logger.log("Pausing video abandon", 5);
-      })
-    }
-    return;
-  }
   if (v.paused) {
-    logger.log("Resuming video", 5);
-    v.play();
+    doOrwait(pauseWaitObj, 100, 'pause', () => v.paused, () => {
+      logger.log("Resuming video", 5);
+      v.play();
+    }, () => logger.log("Resuming video abandon", 5))
   } else {
-    logger.log("Pausing video", 5);
-    v.pause();
+    doOrwait(pauseWaitObj, 100, 'pause', () => !v.paused, () => {
+      logger.log("Pausing video", 5);
+      v.pause();
+    }, () => logger.log("Pausing video abandon", 5))
   }
 }
 
@@ -970,36 +952,16 @@ function waitForIdle(waitObj, timeout) {
 
 var waitObj = {serialId: 0};
 function switchFullscreen(v) {
-  var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
-  if (item && item.force === 'false') {
-    // use a delay way to avoid affecting website's fullscreen method
-    if (!document.fullscreenElement) {
-      waitForIdle(waitObj, 500).then(() => {
-        if (!document.fullscreenElement) {
-          logger.log("requestFullscreen", 5);
-          v.requestFullscreen();
-        }
-      }, () => {
-        logger.log("requestFullscreen abandon", 5);
-      })
-    } else {
-      waitForIdle(waitObj, 500).then(() => {
-        if (document.fullscreenElement) {
-          logger.log("exitFullscreen", 5);
-          document.exitFullscreen();
-        }
-      }, () => {
-        logger.log("exitFullscreen abandon", 5);
-      })
-    }
-    return;
-  }
   if (!document.fullscreenElement) {
-    logger.log("requestFullscreen", 5);
-    v.requestFullscreen();
+    doOrwait(waitObj, 100, 'fullscreen', () => !document.fullscreenElement, () => {
+      logger.log("requestFullscreen", 5);
+      v.requestFullscreen();
+    }, () => logger.log("requestFullscreen abandon", 5))
   } else {
-    logger.log("exitFullscreen", 5);
-    document.exitFullscreen();
+    doOrwait(waitObj, 100, 'fullscreen', () => document.fullscreenElement, () => {
+      logger.log("exitFullscreen", 5);
+      document.exitFullscreen();
+    }, () => logger.log("exitFullscreen abandon", 5))
   }
 }
 
