@@ -883,26 +883,24 @@ function jumpToMark(v) {
 }
 
 function waitEnough(waitObj, timeout) {
-  // 通过多次异步，尽量等待其他js执行完毕，避免可能页面刚打开时原本的js还没执行完，比如可能变成先执行我们的全屏操作
   var count = 0, total = 20;
   var firstId;
-  var startTime = new Date().getTime();
   return new Promise((resolve, reject) => {
 
     clearTimeout(waitObj.timeoutId);
-
     function nextTime() {
+      var startTime = new Date().getTime();
       var id = setTimeout(() => {
-        count++;
-        if (count >= total) {
-          var endTime = new Date().getTime();
-          var gap = endTime - startTime;
-          console.log("waitEnough", startTime, endTime, gap);
-          resolve();
-        } else {
+        var endTime = new Date().getTime();
+        let gap = endTime - startTime;
+        console.log("zxzx", startTime, endTime, gap);
+        // 如果时间延迟相对比较多，代表可能有其他js还在执行，先不打扰，等系统空闲再执行我们的流程
+        if (gap > 40) {
           nextTime();
+        } else {
+          resolve();
         }
-      }, timeout / total);
+      }, timeout / 20);
 
       if (!firstId) {
         firstId = waitObj.timeoutId = id;
