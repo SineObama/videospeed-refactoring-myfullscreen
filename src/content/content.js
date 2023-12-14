@@ -84,13 +84,6 @@ chrome.storage.sync.get(tc.settings, function (storage) {
       force: false,
       predefined: true,
     }); // default: G
-    tc.settings.keyBindings.push({
-      action: "fullscreen",
-      key: Number(storage.fullscreenKeyCode) || 70,
-      value: 0,
-      force: false,
-      predefined: true,
-    }); // default: F
     tc.settings.version = "0.5.3";
 
     chrome.storage.sync.set({
@@ -620,7 +613,7 @@ function initializeNow(document) {
         }
 
         var item = tc.settings.keyBindings.find((item) => item.key === keyCode);
-        if (item) {
+        if (item && !(['pause', 'fullscreen', 'rewind', 'advance'].indexOf(item.action) > -1 && /bilibili\.com$/i.test(location.hostname))) {
           runAction(item.action, item.value);
           if (item.force === "true") {
             // disable websites key bindings
