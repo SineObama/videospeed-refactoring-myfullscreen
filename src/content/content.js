@@ -763,12 +763,37 @@ function runAction(action, value, e) {
     showController(controller);
 
     if (!v.classList.contains("vsc-cancelled")) {
+      var item = tc.settings.keyBindings.find((item) => item.action === action);
       if (action === "rewind") {
-        logger.log("Rewind", 5);
-        v.currentTime -= value;
+        if (item && item.force === 'false') {
+          let beginTime = v.currentTime;
+          waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
+            if (Math.abs(v.currentTime - beginTime) < 3) {
+              logger.log("Rewind", 5);
+              v.currentTime -= value;
+            }
+          }, () => {
+            logger.log("Rewind abandon", 5);
+          })
+        } else {
+          logger.log("Rewind", 5);
+          v.currentTime -= value;
+        }
       } else if (action === "advance") {
-        logger.log("Fast forward", 5);
-        v.currentTime += value;
+        if (item && item.force === 'false') {
+          let beginTime = v.currentTime;
+          waitForIdle(rewindAdvanceWaitObj, 500).then(() => {
+            if (Math.abs(v.currentTime - beginTime) < 3) {
+              logger.log("Fast forward", 5);
+              v.currentTime += value;
+            }
+          }, () => {
+            logger.log("Fast forward abandon", 5);
+          })
+        } else {
+          logger.log("Fast forward", 5);
+          v.currentTime += value;
+        }
       } else if (action === "faster") {
         logger.log("Increase speed", 5);
         // Maximum playback speed in Chrome is set to 16:
@@ -828,7 +853,33 @@ function runAction(action, value, e) {
   logger.log("runAction End", 5);
 }
 
+var rewindAdvanceWaitObj = {serialId: 0};
+var pauseWaitObj = {serialId: 0};
+
 function pause(v) {
+  var item = tc.settings.keyBindings.find((item) => item.action === 'pause');
+  if (item && item.force === 'false') {
+    if (v.paused) {
+      waitForIdle(pauseWaitObj, 500).then(() => {
+        if (v.paused) {
+          logger.log("Resuming video", 5);
+          v.play();
+        }
+      }, () => {
+        logger.log("Resuming video abandon", 5);
+      })
+    } else {
+      waitForIdle(pauseWaitObj, 500).then(() => {
+        if (!v.paused) {
+          logger.log("Pausing video", 5);
+          v.pause();
+        }
+      }, () => {
+        logger.log("Pausing video abandon", 5);
+      })
+    }
+    return;
+  }
   if (v.paused) {
     logger.log("Resuming video", 5);
     v.play();
@@ -879,6 +930,7 @@ function jumpToMark(v) {
 function waitForIdle(waitObj, timeout) {
   let count = 0, total = 20;
   let timeoutOnce = timeout / total;
+  // let timeoutOnce = 50;
   let serialId = ++waitObj.serialId;
   const beginTime = new Date().getTime();
   return new Promise((resolve, reject) => {
@@ -906,7 +958,10 @@ function waitForIdle(waitObj, timeout) {
       }, timeoutOnce);
     }
 
-    nextTime();
+    // 初次执行也延迟一
+    setTimeout(() => {
+      nextTime();
+    }, sessionStorage.myvsc_firtdelay || 150);
 
   }).then(() => {
     // 检查这个对象上是否有重复操作，没有时本次操作才正式生效
@@ -918,28 +973,35 @@ function waitForIdle(waitObj, timeout) {
 
 var waitObj = {serialId: 0};
 function switchFullscreen(v) {
-  logger.log("switchFullscreen", 5);
   var item = tc.settings.keyBindings.find((item) => item.action === 'fullscreen');
   if (item && item.force === 'false') {
     // use a delay way to avoid affecting website's fullscreen method
     if (!document.fullscreenElement) {
       waitForIdle(waitObj, 500).then(() => {
         if (!document.fullscreenElement) {
+          logger.log("requestFullscreen", 5);
           v.requestFullscreen();
         }
-      }, () => {})
+      }, () => {
+        logger.log("requestFullscreen abandon", 5);
+      })
     } else {
       waitForIdle(waitObj, 500).then(() => {
         if (document.fullscreenElement) {
+          logger.log("exitFullscreen", 5);
           document.exitFullscreen();
         }
-      }, () => {})
+      }, () => {
+        logger.log("exitFullscreen abandon", 5);
+      })
     }
     return;
   }
   if (!document.fullscreenElement) {
+    logger.log("requestFullscreen", 5);
     v.requestFullscreen();
   } else {
+    logger.log("exitFullscreen", 5);
     document.exitFullscreen();
   }
 }
