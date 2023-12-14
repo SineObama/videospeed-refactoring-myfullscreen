@@ -883,7 +883,7 @@ function jumpToMark(v) {
 }
 
 function waitEnough(waitObj, timeout) {
-  let count = 0, total = 10;
+  let count = 0, total = window.waitEnoughTotal || 20;
   let timeoutOnce = timeout / total;
   let serialId = ++waitObj.serialId;
   const beginTime = new Date().getTime();
@@ -893,11 +893,14 @@ function waitEnough(waitObj, timeout) {
     function nextTime() {
       let startTime = new Date().getTime();
       let id = setTimeout(() => {
+        if (serialId !== waitObj.serialId) {
+          return;
+        }
         let endTime = new Date().getTime();
         let gap = endTime - startTime - timeoutOnce;
         logger.log("waitEnough gap: " + gap, 5);
         // 核心：如果实际执行时间比设定的时间延迟得比较多，我觉得代表着可能有其他js还在执行，此时继续进行下一次等待，要等系统空闲再执行我们的功能
-        if (gap > 30) {
+        if (gap > 10) {
           nextTime();
         } else {
           resolve();
